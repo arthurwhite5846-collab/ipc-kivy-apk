@@ -33,6 +33,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer cython virtualenv
 
+      - name: First init (download SDK/NDK)
+        run: |
+          buildozer android update
+
+      - name: Install Android SDK Build Tools (Fix AIDL)
+
+        run: |
+          SDKMANAGER=$(find ~/.buildozer -name sdkmanager | head -n 1)
+          echo "Using sdkmanager at: $SDKMANAGER"
+          yes | $SDKMANAGER --licenses
+          $SDKMANAGER "platforms;android-34" "build-tools;34.0.0"
+
       - name: Build APK
         run: |
           buildozer -v android debug
