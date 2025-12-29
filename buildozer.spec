@@ -39,10 +39,13 @@ android.archs = arm64-v8a,armeabi-v7a
 android.minapi = 21
 
 # (int) Target API (optional)
-# android.api = 34
+android.api = 34
 
 # (str) Android NDK (optional) - keep empty so Buildozer chooses a compatible one
-# android.ndk = 25b
+android.ndk = 25b
+
+# (str) Android SDK build tools version
+android.sdk_build_tools_version = 34.0.0
 
 # (list) Permissions (not needed for this offline calculator)
 android.permissions =
