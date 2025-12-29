@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -21,43 +21,43 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            git zip unzip openjdk-17-jdk \
-            python3-pip autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            cmake libffi-dev libssl-dev liblzma-dev libsqlite3-dev \
-            libtinfo6
+          sudo apt-get install -y --no-install-recommends \
+            build-essential git zip unzip \
+            openjdk-17-jdk \
+            autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 \
+            libffi-dev libssl-dev \
+            cmake liblzma-dev libsqlite3-dev
 
-      - name: Install Buildozer and dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install buildozer cython virtualenv
+      - name: Set up Android SDK (accept licenses)
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
 
-      - name: Clean buildozer cache (important)
+      - name: Install Android packages (platform + build-tools)
         run: |
+          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip wheel setuptools
+          python -m pip install buildozer==1.5.0 cython virtualenv
+
+      - name: Clean build dirs
+        run: |
+          rm -rf .buildozer
           rm -rf ~/.buildozer
 
-      - name: Initialize Android SDK/NDK
+      - name: Build APK (debug)
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
         run: |
-          buildozer android update
+          yes | buildozer -v android debug
 
-      - name: Accept Android SDK licenses
-        run: |
-          SDKMANAGER=$(find ~/.buildozer -name sdkmanager | head -n 1)
-          echo "Using sdkmanager at: $SDKMANAGER"
-          yes | $SDKMANAGER --licenses
-
-      - name: Force install Android platform and build-tools
-        run: |
-          SDKMANAGER=$(find ~/.buildozer -name sdkmanager | head -n 1)
-          $SDKMANAGER "platforms;android-34" "build-tools;34.0.0"
-
-      - name: Build APK
-        run: |
-          buildozer -v android debug
-
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: apk
           path: bin/*.apk
+          if-no-files-found: error
